@@ -1,0 +1,11 @@
+# Requirements for OAK camera integration and GStreamer preview
+#
+# Note: For GStreamer bindings (gi.repository.Gst), create the virtualenv with:
+#   python3 -m venv --system-site-packages venv-oak
+# or ensure python3-gi is installed on Ubuntu:
+#   sudo apt install python3-gi python3-gst-1.0
+
+depthai>=3.10.0
+opencv-python>=4.8.0
+numpy>=1.26.0
+pycairo>=1.26.0

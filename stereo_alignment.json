@@ -1,0 +1,38 @@
+{
+  "type": "dvrk_data:stereo_alignment@1.0.0",
+  "name": "dvrk_display_sdi",
+  "gst_output": "@dvrk:stereo_alignment:stereo",
+  "camera": {
+    "size": {
+      "width": 1920,
+      "height": 1080
+    },
+    "left": {
+      "gst_input": "@dvrk:stereo_source:left",
+      "color": {
+        "brightness": 0.0,
+        "contrast": 1.0,
+        "saturation": 1.0,
+        "hue": 0.0
+      }
+    },
+    "right": {
+      "gst_input": "@dvrk:stereo_source:right",
+      "color": {
+        "brightness": -0.011160155181325945,
+        "contrast": 0.8869684549317428,
+        "saturation": 0.6834494017119047,
+        "hue": 0.0
+      }
+    },
+    "alignment": {
+      "horizontal_shift_px": 46,
+      "vertical_shift_px": 54
+    },
+    "crop": {
+      "width": 1811,
+      "height": 1019
+    }
+  },
+  "preserve_size": true
+}
