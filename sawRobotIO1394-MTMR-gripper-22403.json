@@ -1,0 +1,74 @@
+{
+    "$id" : "saw-robot-io.schema.json",
+    "$version" : "6",
+    "robots" : 
+    [
+        {
+            "actuators" : 
+            [
+                {
+                    "actuator_id" : 0,
+                    "axis_id" : 3,
+                    "board_id" : 3,
+                    "drive" : 
+                    {
+                        "bits_to_current" : 
+                        {
+                            "offset" : 6.2526328451444702,
+                            "scale" : -0.00019073500000000001
+                        },
+                        "current_to_bits" : 
+                        {
+                            "offset" : 32794.734912942033,
+                            "scale" : -5242.8800000000001
+                        },
+                        "effort_to_current" : 
+                        {
+                            "scale" : 0.3600544114
+                        },
+                        "maximum_current" : 0.0
+                    },
+                    "encoder" : 
+                    {
+                        "bits_to_position" : 
+                        {
+                            "scale" : 6.2831853071795862
+                        },
+                        "position_limits_soft" : 
+                        {
+                            "lower" : 0.0,
+                            "upper" : 0.0
+                        },
+                        "velocity_source" : "SOFTWARE"
+                    },
+                    "joint_type" : "REVOLUTE",
+                    "potentiometer" : 
+                    {
+                        "bits_to_voltage" : 
+                        {
+                            "offset" : 0.0,
+                            "scale" : 6.866455078125e-05
+                        },
+                        "voltage_to_position" : 
+                        {
+                            "offset" : 6.4397388861662437,
+                            "scale" : -2.042989914868504
+                        }
+                    }
+                }
+            ],
+            "brakes" : [],
+            "hardware_version" : "QLA1",
+            "name" : "MTMR_gripper",
+            "number_of_actuators" : 1,
+            "number_of_brakes" : 0,
+            "potentiometers" : 
+            {
+                "potentiometers_type" : "ANALOG",
+                "tolerances" : null
+            },
+            "serial_number" : "22403",
+            "type" : "io-only"
+        }
+    ]
+}
