@@ -14,6 +14,9 @@
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>dvrk_robot</exec_depend>
   <exec_depend>dvrk_console</exec_depend>
+  <exec_depend>dvrk_newton</exec_depend>
+  <exec_depend>dvrk_pybullet</exec_depend>
+  <exec_depend>dvrk_simulator_base</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-opencv</exec_depend>
   <exec_depend>python3-gi</exec_depend>

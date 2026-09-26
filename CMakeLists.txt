@@ -19,9 +19,13 @@ install(
     stereo_alignment_oak.json
     stereo_display.json
     stereo_display_oak.json
+    stereo_display_simulator.json
     stereo_source.json
+    newton_patient_cart.yaml
+    pybullet_patient_cart.yaml
     system-MTML.json
     system-MTMR.json
+    system-MTML-MTMR-patient-cart-ROS.json
     system-MTMR-PSM2-OAK.json
     system-PSM1.json
   DESTINATION share/${PROJECT_NAME}
