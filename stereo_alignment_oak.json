@@ -1,0 +1,38 @@
+{
+  "type": "dvrk_data:stereo_alignment@1.0.0",
+  "name": "dvrk_display_oak",
+  "gst_output": "@dvrk:stereo_alignment:stereo",
+  "camera": {
+    "size": {
+      "width": 640,
+      "height": 400
+    },
+    "left": {
+      "gst_input": "@dvrk:stereo_source:left",
+      "color": {
+        "brightness": 0.0,
+        "contrast": 1.0,
+        "saturation": 1.0,
+        "hue": 0.0
+      }
+    },
+    "right": {
+      "gst_input": "@dvrk:stereo_source:right",
+      "color": {
+        "brightness": 0.0,
+        "contrast": 1.0,
+        "saturation": 1.0,
+        "hue": 0.0
+      }
+    },
+    "alignment": {
+      "horizontal_shift_px": -15,
+      "vertical_shift_px": -10
+    },
+    "crop": {
+      "width": 608,
+      "height": 380
+    }
+  },
+  "preserve_size": true
+}

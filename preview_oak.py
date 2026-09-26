@@ -84,40 +84,90 @@ def detect_camera_sockets(device: dai.Device, requested_left: str | None, reques
     return left_sock, right_sock
 
 
-def build_gst_pipeline(width: int, height: int, fps: int, sink: str = "glimagesink"):
+# Raw per-eye feeds, aligned/composited downstream by dvrk_data's stereo_alignment.
+GST_SOCKET_LEFT = "@dvrk:stereo_source:left"
+GST_SOCKET_RIGHT = "@dvrk:stereo_source:right"
+
+
+def parse_bool(value: str) -> bool:
+    value = value.lower()
+    if value not in ("true", "false"):
+        raise argparse.ArgumentTypeError("expected true or false")
+    return value == "true"
+
+
+def build_eye_pipeline(width: int, height: int, fps: int, socket_name: str, appsrc_name: str):
+    # dvrk_console/dvrk_data unixfdsrc consumers apply a strict capsfilter
+    # defaulting to I420, so publish that format so caps negotiate.
     pipeline_str = (
-        f"appsrc name=src is-live=true do-timestamp=true format=time max-buffers=1 leaky-type=downstream "
+        f"appsrc name={appsrc_name} is-live=true do-timestamp=true format=time max-buffers=1 leaky-type=downstream "
         f"caps=video/x-raw,format=BGR,width={width},height={height},framerate={fps}/1 ! "
-        f"videoconvert ! {sink} sync=false"
+        f"videoconvert ! video/x-raw,format=I420 ! "
+        f"unixfdsink socket-path={socket_name[1:]} socket-type=abstract sync=false async=false"
     )
     print(f"[GStreamer] Pipeline: {pipeline_str}")
     pipeline = Gst.parse_launch(pipeline_str)
     if not pipeline:
         raise RuntimeError("Failed to parse GStreamer pipeline")
-    appsrc = pipeline.get_by_name("src")
+    appsrc = pipeline.get_by_name(appsrc_name)
+    return pipeline, appsrc
+
+
+def build_preview_pipeline(sbs_width: int, sbs_height: int, fps: int):
+    pipeline_str = (
+        f"appsrc name=preview_src is-live=true do-timestamp=true format=time max-buffers=1 leaky-type=downstream "
+        f"caps=video/x-raw,format=BGR,width={sbs_width},height={sbs_height},framerate={fps}/1 ! "
+        f"videoconvert ! glimagesink sync=false"
+    )
+    print(f"[GStreamer] Pipeline: {pipeline_str}")
+    pipeline = Gst.parse_launch(pipeline_str)
+    if not pipeline:
+        raise RuntimeError("Failed to parse GStreamer pipeline")
+    appsrc = pipeline.get_by_name("preview_src")
     return pipeline, appsrc
 
 
 class OakPreviewApp:
     def __init__(self, left_sock: dai.CameraBoardSocket, right_sock: dai.CameraBoardSocket,
-                 width: int = 1280, height: int = 800, fps: int = 15, sink: str = "glimagesink"):
+                 width: int = 1280, height: int = 800, fps: int = 15,
+                 preview: bool = True, gstsocket: bool = False):
         self.left_sock = left_sock
         self.right_sock = right_sock
         self.width = width
         self.height = height
         self.fps = fps
-        self.sink = sink
+        self.preview = preview
+        self.gstsocket = gstsocket
         self.sbs_width = width * 2
         self.sbs_height = height
 
         self.running = False
         self.loop = GLib.MainLoop()
-        self.gst_pipeline, self.appsrc = build_gst_pipeline(self.sbs_width, self.sbs_height, self.fps, self.sink)
+        self.pipelines = []
+
+        self.preview_pipeline = self.preview_appsrc = None
+        if self.preview:
+            self.preview_pipeline, self.preview_appsrc = build_preview_pipeline(
+                self.sbs_width, self.sbs_height, self.fps
+            )
+            self.pipelines.append(self.preview_pipeline)
+
+        self.left_pipeline = self.appsrc_l = None
+        self.right_pipeline = self.appsrc_r = None
+        if self.gstsocket:
+            self.left_pipeline, self.appsrc_l = build_eye_pipeline(
+                self.width, self.height, self.fps, GST_SOCKET_LEFT, "src_l"
+            )
+            self.right_pipeline, self.appsrc_r = build_eye_pipeline(
+                self.width, self.height, self.fps, GST_SOCKET_RIGHT, "src_r"
+            )
+            self.pipelines.extend([self.left_pipeline, self.right_pipeline])
 
         # Bus watch
-        bus = self.gst_pipeline.get_bus()
-        bus.add_signal_watch()
-        bus.connect("message", self.on_gst_message)
+        for pipeline in self.pipelines:
+            bus = pipeline.get_bus()
+            bus.add_signal_watch()
+            bus.connect("message", self.on_gst_message)
 
     def on_gst_message(self, bus, message):
         t = message.type
@@ -136,8 +186,8 @@ class OakPreviewApp:
             return
         self.running = False
         print("\n[App] Stopping...")
-        if self.gst_pipeline:
-            self.gst_pipeline.set_state(Gst.State.NULL)
+        for pipeline in self.pipelines:
+            pipeline.set_state(Gst.State.NULL)
         if self.loop.is_running():
             self.loop.quit()
 
@@ -148,7 +198,7 @@ class OakPreviewApp:
             usb_speed = device.getUsbSpeed()
             print(f"[OAK] Device USB connection speed: {usb_speed.name}")
             if usb_speed != dai.UsbSpeed.SUPER:
-                print("[NOTE] Camera is connected via USB 2.0 (HIGH speed).")
+                print("[NOTE] Camera is USB 2.0 or connected via USB 2.0 (HIGH speed).")
                 print("       For full 30+ FPS at 1280x800 with minimum latency,")
                 print("       plug into a blue USB 3.0 port with a USB 3.0 cable.")
 
@@ -176,7 +226,8 @@ class OakPreviewApp:
             print("[OAK] Pipeline started successfully")
 
             # Start GStreamer
-            self.gst_pipeline.set_state(Gst.State.PLAYING)
+            for pipeline in self.pipelines:
+                pipeline.set_state(Gst.State.PLAYING)
             self.running = True
 
             def get_latest_frame(q):
@@ -207,18 +258,26 @@ class OakPreviewApp:
                     img_l = frame_l.getCvFrame()
                     img_r = frame_r.getCvFrame()
 
-                    # Combine horizontally: Left on left, Right on right
-                    sbs = np.hstack((img_l, img_r))
-                    data = sbs.tobytes()
+                    def push(appsrc, frame):
+                        buf = Gst.Buffer.new_wrapped(frame.tobytes())
+                        # GStreamer do-timestamp=true assigns the pipeline clock; no manual PTS needed
+                        buf.pts = Gst.CLOCK_TIME_NONE
+                        buf.dts = Gst.CLOCK_TIME_NONE
+                        return appsrc.emit("push-buffer", buf)
 
-                    buf = Gst.Buffer.new_wrapped(data)
-                    # GStreamer do-timestamp=true assigns the pipeline clock; no manual PTS needed
-                    buf.pts = Gst.CLOCK_TIME_NONE
-                    buf.dts = Gst.CLOCK_TIME_NONE
-
-                    ret = self.appsrc.emit("push-buffer", buf)
-                    if ret != Gst.FlowReturn.OK:
-                        print(f"[GStreamer] push-buffer returned {ret}")
+                    push_failed = False
+                    if self.gstsocket:
+                        if push(self.appsrc_l, img_l) != Gst.FlowReturn.OK:
+                            push_failed = True
+                        if push(self.appsrc_r, img_r) != Gst.FlowReturn.OK:
+                            push_failed = True
+                    if self.preview:
+                        # Combine horizontally for the local preview window only.
+                        sbs = np.hstack((img_l, img_r))
+                        if push(self.preview_appsrc, sbs) != Gst.FlowReturn.OK:
+                            push_failed = True
+                    if push_failed:
+                        print("[GStreamer] push-buffer failed")
                         break
 
                     fps_count += 1
@@ -268,17 +327,17 @@ def main():
                         help="Left camera socket (e.g. CAM_A, CAM_B, CAM_C). Auto-detects if omitted.")
     parser.add_argument("--cam-right", type=str, default=None,
                         help="Right camera socket (e.g. CAM_A, CAM_B, CAM_C). Auto-detects if omitted.")
-    parser.add_argument("--width", type=int, default=None, help="Override width (defaults to selected --mode)")
-    parser.add_argument("--height", type=int, default=None, help="Override height (defaults to selected --mode)")
-    parser.add_argument("--fps", type=int, default=None, help="Override framerate (defaults to selected --mode)")
-    parser.add_argument("--sink", type=str, default="glimagesink", help="GStreamer video sink (default: glimagesink)")
+    parser.add_argument("--preview", type=parse_bool, default=True, metavar="true/false",
+                        help="Show the local preview window (default: true)")
+    parser.add_argument("--gstsocket", type=parse_bool, default=False, metavar="true/false",
+                        help=f"Publish raw per-eye feeds to {GST_SOCKET_LEFT} / {GST_SOCKET_RIGHT} (default: false)")
 
     args = parser.parse_args()
 
     mode_cfg = PRESET_MODES[args.mode.lower()]
-    width = args.width if args.width is not None else mode_cfg["width"]
-    height = args.height if args.height is not None else mode_cfg["height"]
-    fps = args.fps if args.fps is not None else mode_cfg["fps"]
+    width = mode_cfg["width"]
+    height = mode_cfg["height"]
+    fps = mode_cfg["fps"]
 
     print(f"[OAK] Selected Mode '{args.mode}': {width}x{height} @ {fps} FPS ({mode_cfg['desc']})")
 
@@ -299,7 +358,8 @@ def main():
         width=width,
         height=height,
         fps=fps,
-        sink=args.sink,
+        preview=args.preview,
+        gstsocket=args.gstsocket,
     )
 
     def sig_handler(sig, frame):

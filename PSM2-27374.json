@@ -1,0 +1,10 @@
+{
+    // see https://dvrk.readthedocs.io
+    "$id": "dvrk-psm.schema.json",
+    "$version": "1",
+    "kinematic": "kinematic/PSM.json",
+    "generation": "Classic"
+    // , "tool_detection": "MANUAL"
+    // , "tool_detection": "FIXED"
+    , "tool_detection": "AUTOMATIC"
+}
