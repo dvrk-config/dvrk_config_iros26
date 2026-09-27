@@ -19,11 +19,16 @@ install(
     sawRobotIO1394-PSM1-327598-PotentiometerLookupTable.json
     sawRobotIO1394-PSM2-27374.json
     sawOpenXR-oak-unixfd.json
+    sawOpenXR-pybullet-dual-console.json
     stereo_alignment.json
     stereo_alignment_oak.json
+    control_panel_console.json
+    control_panel_Meta.json
     stereo_display.json
     stereo_display_oak.json
     stereo_display_openxr_oak.json
+    stereo_display_simulator_console.json
+    stereo_display_simulator_meta.json
     stereo_display_simulator.json
     stereo_source.json
     system-OpenXR-PSM1-PSM2-OAK.json
@@ -32,6 +37,7 @@ install(
     system-MTML.json
     system-MTMR.json
     system-MTML-MTMR-patient-cart-ROS.json
+    system-MTML-MTMR-OpenXR-patient-cart-ROS.json
     system-MTMR-PSM2-MTML-PSM1-Teleop.json
     system-PSM1.json
   DESTINATION share/${PROJECT_NAME}

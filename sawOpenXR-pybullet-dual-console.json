@@ -1,0 +1,7 @@
+{
+  "name": "OpenXR",
+  "video": {
+    "type": "side-by-side",
+    "gst_input": "@dvrk:Meta:stereo_overlay"
+  }
+}
