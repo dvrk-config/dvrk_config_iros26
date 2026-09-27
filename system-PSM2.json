@@ -6,16 +6,16 @@
     [
         {
             "name": "IO",
-            "port": "udp" // fw, udpfw or udp
+            "port": "udpfw" // fw, udpfw or udp
         }
     ]
     ,
     "arms":
     [
         {
-            "name": "PSM1",
+            "name": "PSM2",
             "type": "PSM",
-            "serial": "327598",
+            "serial": "27374",
             "IO": "IO" // defined in IOs
         }
     ]

@@ -89,6 +89,25 @@ GST_SOCKET_LEFT = "@dvrk:stereo_source:left"
 GST_SOCKET_RIGHT = "@dvrk:stereo_source:right"
 
 
+def open_oak_device() -> dai.Device:
+    """Open the first OAK device and explain the common Linux permission fix."""
+    try:
+        return dai.Device()
+    except RuntimeError as error:
+        print(
+            f"\n[OAK Error] Unable to open the camera: {error}\n"
+            "On Linux this commonly means the Luxonis udev rule is missing.\n"
+            "Copy and paste these commands into a terminal:\n\n"
+            "  echo 'SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"03e7\", MODE=\"0666\"' | "
+            "sudo tee /etc/udev/rules.d/80-movidius.rules\n"
+            "  sudo udevadm control --reload-rules\n"
+            "  sudo udevadm trigger\n\n"
+            "Then unplug and reconnect the OAK camera and launch this program again.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1) from None
+
+
 def parse_bool(value: str) -> bool:
     value = value.lower()
     if value not in ("true", "false"):
@@ -193,7 +212,7 @@ class OakPreviewApp:
 
     def run(self):
         # Create DepthAI Pipeline
-        with dai.Pipeline(dai.Device()) as dai_pipeline:
+        with dai.Pipeline(open_oak_device()) as dai_pipeline:
             device = dai_pipeline.getDefaultDevice()
             usb_speed = device.getUsbSpeed()
             print(f"[OAK] Device USB connection speed: {usb_speed.name}")
@@ -223,11 +242,14 @@ class OakPreviewApp:
             q_r = out_r.createOutputQueue(maxSize=1, blocking=False)
 
             dai_pipeline.start()
-            print("[OAK] Pipeline started successfully")
 
             # Start GStreamer
             for pipeline in self.pipelines:
-                pipeline.set_state(Gst.State.PLAYING)
+                state_change = pipeline.set_state(Gst.State.PLAYING)
+                if state_change == Gst.StateChangeReturn.FAILURE:
+                    raise RuntimeError("Failed to start a GStreamer output pipeline")
+
+            print("[OAK] Pipeline started successfully")
             self.running = True
 
             def get_latest_frame(q):
@@ -349,7 +371,7 @@ def main():
         print("Error: No OAK devices found via DepthAI. Please ensure camera is plugged in.")
         sys.exit(1)
 
-    with dai.Device() as test_dev:
+    with open_oak_device() as test_dev:
         left_sock, right_sock = detect_camera_sockets(test_dev, args.cam_left, args.cam_right)
 
     app = OakPreviewApp(

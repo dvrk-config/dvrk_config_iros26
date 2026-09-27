@@ -5,18 +5,18 @@
     "IOs":
     [
         {
-            "name": "IO",
-            "port": "udp" // fw, udpfw or udp
+            "name": "IO1",
+            "port": "fw" // fw, udpfw or udp
         }
     ]
     ,
     "arms":
     [
         {
-            "name": "PSM1",
+            "name": "PSM2",
             "type": "PSM",
-            "serial": "327598",
-            "IO": "IO" // defined in IOs
+            "serial": "27374",
+            "IO": "IO1" // defined in IOs
         }
     ]
 }

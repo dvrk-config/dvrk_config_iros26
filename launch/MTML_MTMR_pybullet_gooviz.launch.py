@@ -1,4 +1,4 @@
-"""Run physical MTMs and pedals with the Newton virtual patient cart and HMD."""
+"""Run physical MTMs and pedals with the PyBullet virtual patient cart and GooVis."""
 
 from pathlib import Path
 
@@ -17,19 +17,19 @@ PACKAGE_NAME = "dvrk_config_iros26"
 
 def generate_launch_description():
     package_share = Path(get_package_share_directory(PACKAGE_NAME))
-    newton_share = Path(get_package_share_directory("dvrk_newton"))
-    default_config = package_share / "newton_patient_cart.yaml"
+    pybullet_share = Path(get_package_share_directory("dvrk_pybullet"))
+    default_config = package_share / "pybullet_patient_cart.yaml"
     system_config = package_share / "system-MTML-MTMR-patient-cart-ROS.json"
     display_config = package_share / "stereo_display_simulator.json"
 
     simulator = ExecuteProcess(
         cmd=[
-            LaunchConfiguration("newton_python"),
-            str(newton_share / "scripts" / "simulator.py"),
-            "--config", LaunchConfiguration("newton_config"),
+            LaunchConfiguration("pybullet_python"),
+            str(pybullet_share / "scripts" / "simulator.py"),
+            "--config", LaunchConfiguration("pybullet_config"),
             "--scene", "ECM_PSM1_PSM2_PSM3.yaml",
             "--scene", LaunchConfiguration("exercise"),
-            "--headless", LaunchConfiguration("headless"),
+            "--gui", LaunchConfiguration("gui"),
         ],
         output="screen",
     )
@@ -73,7 +73,7 @@ def generate_launch_description():
     stop_with_simulator = RegisterEventHandler(
         OnProcessExit(
             target_action=simulator,
-            on_exit=[EmitEvent(event=Shutdown(reason="NVIDIA Newton simulator exited"))],
+            on_exit=[EmitEvent(event=Shutdown(reason="PyBullet simulator exited"))],
         )
     )
     stop_with_system = RegisterEventHandler(
@@ -89,8 +89,8 @@ def generate_launch_description():
             description="Exercise scene YAML path or installed exercise filename.",
         ),
         DeclareLaunchArgument(
-            "headless", default_value="true",
-            description="Run Newton without its desktop viewer window.",
+            "gui", default_value="false",
+            description="Show the local PyBullet debug GUI.",
         ),
         DeclareLaunchArgument(
             "console", default_value="console",
@@ -101,13 +101,13 @@ def generate_launch_description():
             description="Start rqt for console and arm monitoring.",
         ),
         DeclareLaunchArgument(
-            "newton_config", default_value=str(default_config),
-            description="Newton runtime YAML configuration.",
+            "pybullet_config", default_value=str(default_config),
+            description="PyBullet runtime YAML configuration.",
         ),
         DeclareLaunchArgument(
-            "newton_python",
-            default_value=str(Path.home() / "devel" / "venv-newton" / "bin" / "python3"),
-            description="Python interpreter with Newton requirements installed.",
+            "pybullet_python",
+            default_value=str(Path.home() / "devel" / "venv-pybullet" / "bin" / "python3"),
+            description="Python interpreter with PyBullet requirements installed.",
         ),
         simulator,
         stereo_display,

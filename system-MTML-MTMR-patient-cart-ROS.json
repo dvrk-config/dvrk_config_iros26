@@ -11,7 +11,7 @@
     ]
   },
   "IOs": [
-    { "name": "IO", "port": "fw", "protocol": "broadcast-query-read-write" }
+    { "name": "IO", "port": "udpfw", "protocol": "srbw" }
   ],
   "arms": [
     {

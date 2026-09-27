@@ -5,8 +5,8 @@
     "IOs":
     [
         {
-            "name": "IO1",
-            "port": "fw" // fw, udpfw or udp
+            "name": "IO",
+            "port": "udpfw" // fw, udpfw or udp
         }
     ]
     ,
@@ -16,7 +16,7 @@
             "name": "MTML",
             "type": "MTM",
             "serial": "22723",
-            "IO": "IO1" // defined in IOs
+            "IO": "IO" // defined in IOs
         }
     ]
 }

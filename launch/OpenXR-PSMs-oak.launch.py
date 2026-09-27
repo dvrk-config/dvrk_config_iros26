@@ -1,4 +1,4 @@
-"""Start the MTMR/PSM2 dVRK system with the OAK stereo display stack."""
+"""Run physical PSM1/PSM2 from sawOpenXR with OAK stereo video."""
 
 from pathlib import Path
 
@@ -16,20 +16,10 @@ PACKAGE_NAME = "dvrk_config_iros26"
 def generate_launch_description():
     package_share = Path(get_package_share_directory(PACKAGE_NAME))
     package_prefix = Path(get_package_prefix(PACKAGE_NAME))
-    system_config = package_share / "system-MTMR-PSM2-OAK.json"
+    system_config = package_share / "system-OpenXR-PSM1-PSM2-OAK.json"
     alignment_config = package_share / "stereo_alignment_oak.json"
-    display_config = package_share / "stereo_display_oak.json"
-    # preview_oak.py is installed under the package's lib dir, not its share dir
+    display_config = package_share / "stereo_display_openxr_oak.json"
     preview_script = package_prefix / "lib" / PACKAGE_NAME / "preview_oak.py"
-
-    dvrk_system = Node(
-        package="dvrk_robot",
-        executable="dvrk_system",
-        name="dvrk_system",
-        output="screen",
-        cwd=str(package_share),
-        arguments=["--json-config", str(system_config)],
-    )
 
     preview_oak = ExecuteProcess(
         cmd=[
@@ -42,7 +32,6 @@ def generate_launch_description():
         ],
         output="screen",
     )
-
     stereo_alignment = Node(
         package="dvrk_data",
         executable="stereo_alignment",
@@ -50,27 +39,40 @@ def generate_launch_description():
         output="screen",
         arguments=["-c", str(alignment_config)],
     )
-
     stereo_display = Node(
         package="dvrk_console",
         executable="stereo_display",
-        name="stereo_display",
+        name="openxr_stereo_display",
         output="screen",
         arguments=["-c", str(display_config)],
     )
-
+    dvrk_system = Node(
+        package="dvrk_robot",
+        executable="dvrk_system",
+        name="dvrk_system",
+        output="screen",
+        cwd=str(package_share),
+        arguments=["--json-config", str(system_config)],
+    )
     control_panel = Node(
         package="dvrk_console",
         executable="control_panel",
         name="control_panel",
         output="screen",
     )
+    start_system = Node(
+        package="dvrk_simulator_base",
+        executable="start_dvrk_system",
+        name="start_dvrk_system",
+        output="screen",
+        arguments=["--console", LaunchConfiguration("console")],
+    )
 
-    # stereo_alignment's unixfdsrc must connect to preview_oak's unixfdsink sockets,
-    # which only exist once the OAK GStreamer pipeline is playing. Starting
-    # stereo_alignment too early causes a silent/failed connection, so defer it
-    # until preview_oak reports the pipeline is up.
-    started = {"stereo_alignment": False, "stereo_display": False}
+    started = {
+        "stereo_alignment": False,
+        "stereo_display": False,
+        "dvrk_system": False,
+    }
 
     def on_preview_oak_output(event):
         if started["stereo_alignment"]:
@@ -89,8 +91,6 @@ def generate_launch_description():
         )
     )
 
-    # Likewise, stereo_display connects to stereo_alignment's unixfdsink output,
-    # so it must not start until that background pipeline is confirmed running.
     def on_stereo_alignment_output(event):
         if started["stereo_display"]:
             return None
@@ -108,6 +108,23 @@ def generate_launch_description():
         )
     )
 
+    def on_stereo_display_output(event):
+        if started["dvrk_system"]:
+            return None
+        text = event.text.decode(errors="replace")
+        if "Stereo display pipeline started" in text:
+            started["dvrk_system"] = True
+            return [dvrk_system, control_panel, start_system]
+        return None
+
+    launch_dvrk_system = RegisterEventHandler(
+        OnProcessIO(
+            target_action=stereo_display,
+            on_stdout=on_stereo_display_output,
+            on_stderr=on_stereo_display_output,
+        )
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             "oak_mode",
@@ -117,11 +134,16 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "oak_python",
             default_value=str(Path.home() / "devel" / "venv-oak" / "bin" / "python3"),
-            description="Python executable (inside the OAK venv) used to run preview_oak.py.",
+            description="Python executable inside the OAK virtual environment.",
         ),
-        dvrk_system,
-        preview_oak,
+        DeclareLaunchArgument(
+            "console",
+            default_value="console",
+            description="dVRK console ROS namespace.",
+        ),
+        # Register handlers before preview_oak can emit readiness output.
         start_stereo_alignment,
         start_stereo_display,
-        control_panel,
+        launch_dvrk_system,
+        preview_oak,
     ])

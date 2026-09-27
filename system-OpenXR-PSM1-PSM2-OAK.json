@@ -1,0 +1,129 @@
+{
+  "$id": "dvrk-system.schema.json",
+  "$version": "1",
+  "component_manager": {
+    "components": [
+      {
+        "shared-library": "sawOpenXR",
+        "class-name": "mtsOpenXR",
+        "constructor-arg": {
+          "Name": "OpenXR"
+        },
+        "configure-parameter": "sawOpenXR-oak-unixfd.json"
+      }
+    ]
+  },
+  "IOs": [
+    {
+      "name": "IO",
+      "port": "udpfw",
+      "protocol": "srbw"
+    }
+  ],
+  "arms": [
+    {
+      "name": "PSM1",
+      "type": "PSM",
+      "serial": "327598",
+      "IO": "IO",
+      "base_frame": {
+        "reference_frame": "ECM",
+        "transform": [
+          [-1.0, 0.0, 0.0, -0.20],
+          [0.0, 0.0, 1.0, 0.0],
+          [0.0, 1.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 1.0]
+        ]
+      }
+    },
+    {
+      "name": "PSM2",
+      "type": "PSM",
+      "serial": "27374",
+      "IO": "IO",
+      "base_frame": {
+        "reference_frame": "ECM",
+        "transform": [
+          [-1.0, 0.0, 0.0, 0.20],
+          [0.0, 0.0, 1.0, 0.0],
+          [0.0, 1.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 1.0]
+        ]
+      }
+    },
+    {
+      "name": "MTML",
+      "type": "MTM_GENERIC",
+      "component": "OpenXR",
+      "interface": "MTML"
+    },
+    {
+      "name": "MTMR",
+      "type": "MTM_GENERIC",
+      "component": "OpenXR",
+      "interface": "MTMR"
+    }
+  ],
+  "consoles": [
+    {
+      "name": "console",
+      "input_type": "COMPONENTS",
+      "operator_present": {
+        "component": "OpenXR",
+        "interface": "Console/operator_present"
+      },
+      "clutch": {
+        "component": "OpenXR",
+        "interface": "Console/clutch"
+      },
+      "camera": {
+        "component": "OpenXR",
+        "interface": "Console/camera"
+      },
+      "teleop_PSMs": [
+        {
+          "MTM": "MTML",
+          "PSM": "PSM1",
+          "clutch": {
+            "component": "OpenXR",
+            "interface": "Console/clutch/MTML"
+          },
+          "configure_parameter": {
+            "MTM_is_haptic": false,
+            "align_MTM": false,
+            "use_MTM_linear_velocity": false,
+            "use_MTM_angular_velocity": false,
+            "ignore_jaw": false,
+            "start_gripper_threshold": 0.0,
+            "gripper_scaling": {
+              "zero": 0.3490658504,
+              "max": 1.7453292520
+            },
+            "scale": 0.2
+          }
+        },
+        {
+          "MTM": "MTMR",
+          "PSM": "PSM2",
+          "clutch": {
+            "component": "OpenXR",
+            "interface": "Console/clutch/MTMR"
+          },
+          "configure_parameter": {
+            "MTM_is_haptic": false,
+            "align_MTM": false,
+            "use_MTM_linear_velocity": false,
+            "use_MTM_angular_velocity": false,
+            "ignore_jaw": false,
+            "start_gripper_threshold": 0.0,
+            "gripper_scaling": {
+              "zero": 0.3490658504,
+              "max": 1.7453292520
+            },
+            "scale": 0.2
+          }
+        }
+      ]
+    }
+  ]
+}

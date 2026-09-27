@@ -11,3 +11,6 @@ log/
 .pytest_cache/
 .mypy_cache/
 .coverage
+
+# Editor settings
+.vscode/
