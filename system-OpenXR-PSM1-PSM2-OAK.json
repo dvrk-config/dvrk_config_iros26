@@ -17,6 +17,7 @@
     {
       "name": "IO",
       "port": "udpfw",
+      "watchdog_timeout": 0.1,
       "protocol": "srbw"
     }
   ],

@@ -11,7 +11,7 @@
     ]
   },
   "IOs": [
-    { "name": "IO", "port": "udpfw", "protocol": "srbw" }
+    { "name": "IO", "port": "udpfw", "protocol": "srbw", "watchdog_timeout": 0.1 }
   ],
   "arms": [
     {

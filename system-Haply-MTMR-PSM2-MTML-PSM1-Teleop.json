@@ -3,6 +3,18 @@
     // see https://dvrk.readthedocs.io
     "$id": "dvrk-system.schema.json",
     "$version": "1",
+    "component_manager": {
+        "components": [
+            {
+                "shared-library": "sawHaplyService",
+                "class-name": "mtsHaply",
+                "constructor-arg": {
+                    "Name": "Haply"
+                },
+                "configure-parameter": "sawHaplyService-IROS26-MTMR.json"
+            }
+        ]
+    },
     "IOs":
     [
         {
@@ -60,9 +72,9 @@
         ,
         {
             "name": "MTMR",
-            "type": "MTM",
-            "serial": "22403",
-            "IO": "IO",
+            "type": "MTM_GENERIC",
+            "component": "Haply",
+            "interface": "MTMR",
             "base_frame": {
                 "reference_frame": "HRSV",
                 "transform": [[ -1.0,  0.0,          0.0,         -0.180],
@@ -89,7 +101,11 @@
             [
                 {
                     "MTM": "MTMR",
-                    "PSM": "PSM2"
+                    "PSM": "PSM2",
+                    "configure_parameter": {
+                        "align_MTM": false,
+                        "start_gripper_threshold": 0.0
+                    }
                 }
                 ,
                 {

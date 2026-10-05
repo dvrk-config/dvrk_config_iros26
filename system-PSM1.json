@@ -6,7 +6,8 @@
     [
         {
             "name": "IO",
-            "port": "udp" // fw, udpfw or udp
+            "port": "udp", // fw, udpfw or udp
+            "watchdog_timeout": 0.1
         }
     ]
     ,

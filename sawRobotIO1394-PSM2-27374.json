@@ -364,12 +364,12 @@
                     },
                     {
                         "axis_id": 5,
-                        "distance": 0.08726646259971647,
+                        "distance": 0.15,
                         "latency": 0.01
                     },
                     {
                         "axis_id": 6,
-                        "distance": 0.08726646259971647,
+                        "distance": 0.15,
                         "latency": 0.01
                     }
                 ]

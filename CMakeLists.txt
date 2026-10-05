@@ -39,6 +39,8 @@ install(
     system-MTML-MTMR-patient-cart-ROS.json
     system-MTML-MTMR-OpenXR-patient-cart-ROS.json
     system-MTMR-PSM2-MTML-PSM1-Teleop.json
+    system-Haply-MTMR-PSM2-MTML-PSM1-Teleop.json
+    sawHaplyService-IROS26-MTMR.json
     system-PSM1.json
   DESTINATION share/${PROJECT_NAME}
 )
