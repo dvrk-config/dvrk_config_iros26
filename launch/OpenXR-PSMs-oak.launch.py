@@ -60,13 +60,6 @@ def generate_launch_description():
         name="control_panel",
         output="screen",
     )
-    start_system = Node(
-        package="dvrk_simulator_base",
-        executable="start_dvrk_system",
-        name="start_dvrk_system",
-        output="screen",
-        arguments=["--console", LaunchConfiguration("console")],
-    )
 
     started = {
         "stereo_alignment": False,
@@ -114,7 +107,7 @@ def generate_launch_description():
         text = event.text.decode(errors="replace")
         if "Stereo display pipeline started" in text:
             started["dvrk_system"] = True
-            return [dvrk_system, control_panel, start_system]
+            return [dvrk_system, control_panel]
         return None
 
     launch_dvrk_system = RegisterEventHandler(

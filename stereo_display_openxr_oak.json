@@ -6,10 +6,7 @@
   "sinks": [],
   "gst_input": "@dvrk:stereo_alignment:stereo",
   "gst_output": "@dvrk:console:stereo_overlay",
-  "eye_size": {
-    "width": 640,
-    "height": 400
-  },
+  "eye_size": "auto",
   "preserve_size": true,
   "display_horizontal_offset_px": -40
 }

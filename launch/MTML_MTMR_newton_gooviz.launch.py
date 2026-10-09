@@ -54,12 +54,6 @@ def generate_launch_description():
         name="control_panel",
         output="screen",
     )
-    start_system = Node(
-        package="dvrk_simulator_base",
-        executable="start_dvrk_system",
-        output="screen",
-        arguments=["--console", LaunchConfiguration("console")],
-    )
     rqt_monitor = ExecuteProcess(
         cmd=["rqt"],
         additional_env={
@@ -113,7 +107,6 @@ def generate_launch_description():
         stereo_display,
         control_panel,
         dvrk_system,
-        start_system,
         rqt_monitor,
         stop_with_simulator,
         stop_with_system,

@@ -26,7 +26,7 @@ def generate_launch_description():
             "--config", LaunchConfiguration("pybullet_config"),
             "--scene", "ECM_PSM1_PSM2_PSM3.yaml",
             "--scene", LaunchConfiguration("exercise"),
-            "--gui", LaunchConfiguration("gui"),
+            "--headless", LaunchConfiguration("headless"),
         ],
         output="screen",
     )
@@ -77,13 +77,6 @@ def generate_launch_description():
             "--config", str(package_share / "control_panel_Meta.json")
         ],
     )
-    start_system = Node(
-        package="dvrk_simulator_base",
-        executable="start_dvrk_system",
-        name="start_dvrk_system",
-        output="screen",
-        arguments=["--console", "console"],
-    )
     rqt_monitor = ExecuteProcess(
         cmd=["rqt"],
         additional_env={
@@ -116,9 +109,9 @@ def generate_launch_description():
             description="Exercise scene YAML path or installed exercise filename.",
         ),
         DeclareLaunchArgument(
-            "gui",
-            default_value="false",
-            description="Show the local PyBullet debug GUI.",
+            "headless",
+            default_value="true",
+            description="Run PyBullet without its desktop viewer window.",
         ),
         DeclareLaunchArgument(
             "rqt",
@@ -146,7 +139,6 @@ def generate_launch_description():
         dvrk_system,
         console_control_panel,
         meta_control_panel,
-        start_system,
         rqt_monitor,
         *stop_handlers,
     ])
